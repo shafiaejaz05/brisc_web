@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoScan AI | Brain Tumor Detection</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --success-bg: #dcfce7;
+            --success-text: #166534;
+            --error-bg: #fee2e2;
+            --error-text: #991b1b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Navigation Bar */
+        nav {
+            background-color: var(--card-bg);
+            padding: 1rem 2rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            font-weight: 700;
+            font-size: 1.25rem;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Main Container */
+        .container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 1rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
+            width: 100%;
+            max-width: 600px;
+            padding: 2.5rem;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-main);
+        }
+
+        p.subtitle {
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+            font-size: 0.95rem;
+        }
+
+        /* Upload Area */
+        .upload-area {
+            border: 2px dashed #cbd5e1;
+            border-radius: 0.75rem;
+            padding: 3rem 1rem;
+            background-color: #f8fafc;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .upload-area:hover, .upload-area.dragover {
+            border-color: var(--primary);
+            background-color: #eff6ff;
+        }
+
+        .upload-area input[type="file"] {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .upload-icon {
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin-bottom: 1rem;
+        }
+
+        .upload-text {
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 0.25rem;
+        }
+
+        .upload-hint {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        /* Button */
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            padding: 0.875rem 2rem;
+            font-size: 1rem;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            width: 100%;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        button:hover {
+            background-color: var(--primary-hover);
+        }
+
+        button:disabled {
+            background-color: #94a3b8;
+            cursor: not-allowed;
+        }
+
+        /* Results Box */
+        #result {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            display: none;
+            font-weight: 600;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .result-success {
+            display: block !important;
+            background-color: var(--success-bg);
+            color: var(--success-text);
+            border: 1px solid #bbf7d0;
+        }
+
+        .result-error {
+            display: block !important;
+            background-color: var(--error-bg);
+            color: var(--error-text);
+            border: 1px solid #fecaca;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="logo">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            EcoScan AI
+        </div>
+    </nav>
+
+    <div class="container">
+        <div class="card">
+            <h1>Brain Tumor Detection</h1>
+            <p class="subtitle">Upload an MRI scan (JPG/PNG) to analyze for potential tumors using our AI model.</p>
+
+            <div class="upload-area" id="drop-zone">
+                <input type="file" id="f" accept="image/*">
+                <div class="upload-icon">↑</div>
+                <div class="upload-text">Click to upload or drag and drop</div>
+                <div class="upload-hint">SVG, PNG, JPG (max. 10MB)</div>
+                <div id="file-name" style="margin-top: 10px; font-weight: bold; color: var(--primary);"></div>
+            </div>
+
+            <button onclick="upload()" id="submit-btn">
+                <span id="btn-text">Analyze Scan</span>
+                <div class="spinner" id="spinner"></div>
+            </button>
+
+            <div id="result"></div>
+        </div>
+    </div>
+
+    <script>
+        // Show file name when selected
+        const fileInput = document.getElementById('f');
+        const fileNameDisplay = document.getElementById('file-name');
+
+        fileInput.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                fileNameDisplay.textContent = "Selected: " + this.files[0].name;
+            }
+        });
+
+        async function upload() {
+            const file = fileInput.files[0];
+            const resultDiv = document.getElementById('result');
+            const btn = document.getElementById('submit-btn');
+            const btnText = document.getElementById('btn-text');
+            const spinner = document.getElementById('spinner');
+
+            if (!file) {
+                resultDiv.className = 'result-error';
+                resultDiv.innerHTML = 'Please select an image first.';
+                return;
+            }
+
+            // Set Loading State
+            btn.disabled = true;
+            btnText.style.display = 'none';
+            spinner.style.display = 'block';
+            resultDiv.style.display = 'none';
+
+            const fd = new FormData(); 
+            fd.append('file', file);
+
+            try {
+                const res = await fetch('/predict', { method: 'POST', body: fd });
+                const data = await res.json();
+
+                if (res.ok) {
+                    resultDiv.className = 'result-success';
+                    resultDiv.innerHTML = `Result: ${data.label} <br><span style="font-size:0.85em; font-weight:normal;">Confidence: ${(data.confidence*100).toFixed(1)}%</span>`;
+                } else {
+                    resultDiv.className = 'result-error';
+                    resultDiv.innerHTML = `Invalid Image: ${data.error}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result-error';
+                resultDiv.innerHTML = 'An error occurred. Is the server running?';
+            } finally {
+                // Reset Button State
+                btn.disabled = false;
+                btnText.style.display = 'block';
+                spinner.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>
