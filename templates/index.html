@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EcoScan AI | Brain Tumor Detection</title>
+    <link rel="icon" href="data:,">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -202,7 +203,10 @@
 
     <nav>
         <div class="logo">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/>
+                <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/>
+            </svg>
             EcoScan AI
         </div>
     </nav>
@@ -230,59 +234,85 @@
     </div>
 
     <script>
-        // Show file name when selected
-        const fileInput = document.getElementById('f');
-        const fileNameDisplay = document.getElementById('file-name');
+    // Show file name when selected
+    const fileInput = document.getElementById('f');
+    const fileNameDisplay = document.getElementById('file-name');
 
-        fileInput.addEventListener('change', function() {
-            if (this.files && this.files[0]) {
-                fileNameDisplay.textContent = "Selected: " + this.files[0].name;
-            }
-        });
-
-        async function upload() {
-            const file = fileInput.files[0];
-            const resultDiv = document.getElementById('result');
-            const btn = document.getElementById('submit-btn');
-            const btnText = document.getElementById('btn-text');
-            const spinner = document.getElementById('spinner');
-
-            if (!file) {
-                resultDiv.className = 'result-error';
-                resultDiv.innerHTML = 'Please select an image first.';
-                return;
-            }
-
-            // Set Loading State
-            btn.disabled = true;
-            btnText.style.display = 'none';
-            spinner.style.display = 'block';
-            resultDiv.style.display = 'none';
-
-            const fd = new FormData(); 
-            fd.append('file', file);
-
-            try {
-                const res = await fetch('/predict', { method: 'POST', body: fd });
-                const data = await res.json();
-
-                if (res.ok) {
-                    resultDiv.className = 'result-success';
-                    resultDiv.innerHTML = `Result: ${data.label} <br><span style="font-size:0.85em; font-weight:normal;">Confidence: ${(data.confidence*100).toFixed(1)}%</span>`;
-                } else {
-                    resultDiv.className = 'result-error';
-                    resultDiv.innerHTML = `Invalid Image: ${data.error}`;
-                }
-            } catch (error) {
-                resultDiv.className = 'result-error';
-                resultDiv.innerHTML = 'An error occurred. Is the server running?';
-            } finally {
-                // Reset Button State
-                btn.disabled = false;
-                btnText.style.display = 'block';
-                spinner.style.display = 'none';
-            }
+    fileInput.addEventListener('change', function() {
+        if (this.files && this.files[0]) {
+            fileNameDisplay.textContent = "Selected: " + this.files[0].name;
         }
-    </script>
+    });
+
+    async function upload() {
+        const file = fileInput.files[0];
+        const resultDiv = document.getElementById('result');
+        const btn = document.getElementById('submit-btn');
+        const btnText = document.getElementById('btn-text');
+        const spinner = document.getElementById('spinner');
+
+        // Error 1: No file selected
+        if (!file) {
+            resultDiv.className = 'result-error';
+            resultDiv.style.display = 'block';
+            resultDiv.innerHTML = `
+                <strong>⚠️ No Scan Selected</strong><br>
+                <span style="font-size:0.85em; font-weight:normal;">Please select a valid T1-weighted MRI image before analyzing.</span>`;
+            return;
+        }
+
+        // Set Loading State
+        btn.disabled = true;
+        btnText.style.display = 'none';
+        spinner.style.display = 'block';
+        resultDiv.style.display = 'none';
+
+        const fd = new FormData(); 
+        fd.append('file', file);
+
+        try {
+            const res = await fetch('/predict', { method: 'POST', body: fd });
+            const data = await res.json();
+
+            if (res.ok) {
+                const confidence = data.confidence * 100;
+                
+                // Error 2: Inconclusive Scan (Low Confidence)
+                if (confidence < 60) {
+                    resultDiv.className = 'result-error'; 
+                    resultDiv.innerHTML = `
+                        <strong>❓ Inconclusive Scan</strong><br>
+                        <span style="font-size:0.85em; font-weight:normal;">The AI model is uncertain (Confidence: ${confidence.toFixed(1)}%). The image may be blurry, incorrectly cropped, or not a standard T1 MRI. Please try a clearer scan.</span>`;
+                } 
+                // Success: Confident Prediction
+                else {
+                    resultDiv.className = 'result-success';
+                    resultDiv.innerHTML = `
+                        <strong>✅ Result: ${data.label}</strong><br>
+                        <span style="font-size:0.85em; font-weight:normal;">Model Confidence: ${confidence.toFixed(1)}%</span>`;
+                }
+            } else {
+                // Error 3: Rejected by Validation Gate (Backend)
+                // e.g., "The image appears to be colored..."
+                resultDiv.className = 'result-error';
+                resultDiv.innerHTML = `
+                    <strong>🛑 Invalid Image Detected</strong><br>
+                    <span style="font-size:0.85em; font-weight:normal;">${data.error}</span>`;
+            }
+        } catch (error) {
+            // Error 4: Server / Network Error
+            resultDiv.className = 'result-error';
+            resultDiv.innerHTML = `
+                <strong>🔌 Connection Error</strong><br>
+                <span style="font-size:0.85em; font-weight:normal;">Could not connect to the AI server. Please ensure the backend (Flask) is running and try again.</span>`;
+        } finally {
+            // Reset Button State
+            btn.disabled = false;
+            btnText.style.display = 'block';
+            spinner.style.display = 'none';
+            resultDiv.style.display = 'block'; 
+        }
+    }
+</script>
 </body>
 </html>
